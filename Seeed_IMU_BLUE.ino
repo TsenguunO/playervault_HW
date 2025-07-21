@@ -4,6 +4,8 @@
 #include "imu_handler.h"
 #include "ble_handler.h"
 #include "gps_handler.h"
+#include "debug_utils.h"
+#include "sensor_packet.h"
 #include <TinyGPSPlus.h>
 
 // ========== Instances and Globals ==========
@@ -14,8 +16,27 @@ int packetCounter = 0;
 const uint32_t SEND_INTERVAL = 5000;
 uint32_t lastSend = 0;
 
+//void printPacketDebug(const SensorPacket& pkt);
+
+//Flash light to inform ble status
+void onConnect(uint16_t conn_handle) {
+  //Green on once connected
+  digitalWrite(LED_BLUE,  HIGH);
+  digitalWrite(LED_GREEN, LOW);
+}
+void onDisconnect(uint16_t conn_handle, uint8_t reason) {
+  //Green off once disconnected
+  digitalWrite(LED_GREEN, HIGH);
+  digitalWrite(LED_BLUE,  LOW);
+}
+
+
+
+
 void setup() {
   setupLEDs();           // Set pinMode for onboard LEDs
+  digitalWrite(LED_RED, LOW); //Device is on
+  
   setupGPS();            // Initialize GPS Serial1
   Serial.begin(115200);  // Serial monitor
   while (!Serial);
@@ -71,29 +92,19 @@ void loop() {
     
     // 3. Notify BLE
     if (Bluefruit.connected()) {
-    imuChar.notify((uint8_t*)&sensorPacket, sizeof(sensorPacket));
+      digitalWrite(LED_GREEN, HIGH);
+      imuChar.notify((uint8_t*)&sensorPacket, sizeof(sensorPacket));
+      delay(100);
+      digitalWrite(LED_RED, HIGH);
+      digitalWrite(LED_GREEN,LOW);
+      
     }
+    else{
+      digitalWrite(LED_GREEN, HIGH);
+      }
 
     // 4. Serial debug output
-    Serial.println("📤 BLE IMU Packet:");
-    //imu
-    Serial.print("  seq: ");    Serial.println(sensorPacket.sequence);
-    Serial.print("  ac_x: ");   Serial.println(sensorPacket.ac_x, 4);
-    Serial.print("  ac_y: ");   Serial.println(sensorPacket.ac_y, 4);
-    Serial.print("  ac_z: ");   Serial.println(sensorPacket.ac_z, 4);
-    Serial.print("  gyro_x: "); Serial.println(sensorPacket.gyro_x, 4);
-    Serial.print("  gyro_y: "); Serial.println(sensorPacket.gyro_y, 4);
-    Serial.print("  gyro_z: "); Serial.println(sensorPacket.gyro_z, 4);
-    
-    //gps and time
-    Serial.print("  Lat: "); Serial.println(sensorPacket.lat / 1000000.0, 6);
-    Serial.print("  Lon: "); Serial.println(sensorPacket.lon / 1000000.0, 6);
-    Serial.print("  UTC: ");
-    uint8_t h = sensorPacket.utc / 3600;
-    uint8_t m = (sensorPacket.utc % 3600) / 60;
-    uint8_t s = sensorPacket.utc % 60;
-    Serial.printf("%02d:%02d:%02d\n", h, m, s);
-    Serial.println("--end--");
+    DebugUtils::printPacketDebug(sensorPacket);
   }
 
   delay(5);

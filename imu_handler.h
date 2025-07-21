@@ -15,6 +15,7 @@ void setupIMU() {
   }
 }
 
+
 // Read IMU sensor data into buffer
 void readIMUData(float* buffer, int counter) {
   buffer[0] = counter;

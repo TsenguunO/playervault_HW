@@ -2,7 +2,7 @@
 #define BLE_HANDLER_H
 
 #include <bluefruit.h>
-
+#include "sensor_packet.h"
 // BLE service & characteristic UUIDs
 BLEService imuService("12345678-1234-5678-1234-56789abcdef0");
 BLECharacteristic imuChar("abcdef01-1234-5678-1234-56789abcdef0");
@@ -11,21 +11,6 @@ BLECharacteristic imuChar("abcdef01-1234-5678-1234-56789abcdef0");
 uint16_t currentMtu = 23;
 bool readyToNotify = false;
 
-// ========== Sensor Packet ==========
-#pragma pack(push, 1)
-typedef struct {
-  int32_t sequence;
-  float ac_x;
-  float ac_y;
-  float ac_z;
-  float gyro_x;
-  float gyro_y;
-  float gyro_z;
-  int32_t lat;
-  int32_t lon;
-  uint32_t utc;
-} SensorPacket;
-#pragma pack(pop)
 
 SensorPacket* sensorDataGlobal = nullptr;
 
@@ -87,6 +72,8 @@ void setupBLE(SensorPacket* sensorDataRef) {
   Bluefruit.Advertising.restartOnDisconnect(true);
   delay(1000);
   Bluefruit.Advertising.start(0);
+
+  digitalWrite(LED_BLUE, LOW);
 }
 
 #endif
